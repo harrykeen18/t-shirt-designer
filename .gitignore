@@ -1,0 +1,16 @@
+# Firebase
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
+
+# Environment
+.env
+.env.local
+
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.iml
