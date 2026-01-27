@@ -1,0 +1,13 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Design images - writeable by app users, readable for fulfillment
+    match /designs/{designId} {
+      // Allow anyone to upload designs (no auth required for MVP)
+      // In production, you'd want to add authentication
+      allow read: if true;
+      allow write: if request.resource.contentType.matches('image/png')
+                   && request.resource.size < 10 * 1024 * 1024; // 10MB max
+    }
+  }
+}

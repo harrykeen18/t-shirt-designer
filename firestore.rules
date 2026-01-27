@@ -1,0 +1,17 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Orders collection - read/write from functions only (admin SDK bypasses rules)
+    // No client-side access for security
+    match /orders/{orderId} {
+      allow read: if false;
+      allow write: if false;
+    }
+
+    // Pricing config - readable by anyone (could be used to display dynamic pricing)
+    match /config/pricing {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}
