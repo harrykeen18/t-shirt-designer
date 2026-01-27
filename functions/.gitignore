@@ -1,0 +1,16 @@
+# Compiled JavaScript
+lib/
+
+# Dependencies
+node_modules/
+
+# Local Firebase emulator data
+firebase-debug.log
+firebase-debug.*.log
+firestore-debug.log
+pubsub-debug.log
+ui-debug.log
+
+# Environment files
+.env
+.env.local
