@@ -3,11 +3,11 @@ import * as admin from 'firebase-admin';
 import Stripe from 'stripe';
 import { placeTeemillOrder } from '../teemill/placeOrder';
 
-const stripe = new Stripe(functions.config().stripe?.secret_key || process.env.STRIPE_SECRET_KEY || '', {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2023-10-16',
 });
 
-const webhookSecret = functions.config().stripe?.webhook_secret || process.env.STRIPE_WEBHOOK_SECRET || '';
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
 
 /**
  * Stripe webhook handler for payment events

@@ -2,8 +2,8 @@ import * as functions from 'firebase-functions';
 
 const TEEMILL_API_BASE = 'https://teemill.com/omnis/v3';
 
-// Get API key from Firebase config or environment
-const TEEMILL_API_KEY = functions.config().teemill?.api_key || process.env.TEEMILL_API_KEY || '';
+// Get API key from environment variables
+const TEEMILL_API_KEY = process.env.TEEMILL_API_KEY || '';
 
 interface TeemillApiResponse {
   success: boolean;
