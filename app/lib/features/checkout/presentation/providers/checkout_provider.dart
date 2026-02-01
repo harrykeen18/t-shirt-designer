@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import '../../../../core/constants/pricing.dart';
 import '../../../canvas/presentation/providers/canvas_provider.dart';
 import '../../data/repositories/order_repository.dart';
@@ -81,7 +82,7 @@ class CheckoutNotifier extends StateNotifier<CheckoutState> {
     state = state.copyWith(shippingAddress: address);
   }
 
-  /// Process the checkout (demo mode - no real payment)
+  /// Process the checkout
   Future<bool> processCheckout() async {
     if (state.shippingAddress == null) {
       state = state.copyWith(
@@ -114,11 +115,25 @@ class CheckoutNotifier extends StateNotifier<CheckoutState> {
         currency: Pricing.currency.toLowerCase(),
       );
 
+      final clientSecret = paymentResult['clientSecret'] as String?;
       final returnedOrderId = paymentResult['orderId'] as String?;
 
-      // 3. Simulate payment processing (in production, this uses Stripe Payment Sheet)
+      if (clientSecret == null) {
+        throw Exception('Failed to create payment intent');
+      }
+
+      // 3. Present payment sheet
       state = state.copyWith(status: CheckoutStatus.processingPayment);
-      await Future.delayed(const Duration(seconds: 1));
+
+      await Stripe.instance.initPaymentSheet(
+        paymentSheetParameters: SetupPaymentSheetParameters(
+          paymentIntentClientSecret: clientSecret,
+          merchantDisplayName: 'T-Shirt Print',
+          style: ThemeMode.system,
+        ),
+      );
+
+      await Stripe.instance.presentPaymentSheet();
 
       // 4. Success!
       state = state.copyWith(
@@ -127,6 +142,17 @@ class CheckoutNotifier extends StateNotifier<CheckoutState> {
       );
 
       return true;
+    } on StripeException catch (e) {
+      // User cancelled or payment failed
+      if (e.error.code == FailureCode.Canceled) {
+        state = state.copyWith(status: CheckoutStatus.idle);
+      } else {
+        state = state.copyWith(
+          status: CheckoutStatus.error,
+          errorMessage: e.error.localizedMessage ?? 'Payment failed',
+        );
+      }
+      return false;
     } catch (e) {
       state = state.copyWith(
         status: CheckoutStatus.error,

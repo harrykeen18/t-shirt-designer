@@ -1,14 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 
+import 'firebase_options.dart';
 import 'features/canvas/presentation/screens/canvas_screen.dart';
 import 'features/preview/presentation/screens/preview_screen.dart';
 import 'features/checkout/presentation/screens/checkout_screen.dart';
 import 'features/checkout/presentation/screens/success_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Load environment variables
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (e) {
+    debugPrint('No .env file found, using defaults');
+  }
+
+  // Initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // Initialize Stripe
+  final stripeKey = dotenv.env['STRIPE_PUBLISHABLE_KEY'] ?? '';
+  if (stripeKey.isNotEmpty) {
+    Stripe.publishableKey = stripeKey;
+  }
+
   runApp(const ProviderScope(child: TshirtPrintApp()));
 }
 

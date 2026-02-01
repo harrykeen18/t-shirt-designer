@@ -1,5 +1,9 @@
 import 'dart:typed_data';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/constants/colors.dart';
 import '../../../../core/utils/image_utils.dart';
 
 /// Shipping address model
@@ -58,27 +62,65 @@ class Order {
     required this.createdAt,
     this.teemillOrderId,
   });
+
+  factory Order.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return Order(
+      id: doc.id,
+      designUrl: data['designUrl'] ?? '',
+      shippingAddress: ShippingAddress(
+        name: data['shippingAddress']?['name'] ?? '',
+        line1: data['shippingAddress']?['line1'] ?? '',
+        line2: data['shippingAddress']?['line2'] ?? '',
+        city: data['shippingAddress']?['city'] ?? '',
+        state: data['shippingAddress']?['state'] ?? '',
+        postcode: data['shippingAddress']?['postcode'] ?? '',
+        country: data['shippingAddress']?['country'] ?? '',
+      ),
+      tshirtColorIndex: data['tshirtColorIndex'] ?? 0,
+      amountCents: data['amountCents'] ?? 0,
+      currency: data['currency'] ?? 'USD',
+      status: data['status'] ?? 'pending',
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      teemillOrderId: data['teemillOrderId'],
+    );
+  }
 }
 
-/// Repository for order operations (stub implementation - Firebase not yet configured)
+/// Repository for order operations
 class OrderRepository {
-  OrderRepository();
+  final FirebaseFunctions _functions;
+  final FirebaseStorage _storage;
+  final FirebaseFirestore _firestore;
 
-  /// Upload design image (stub - returns fake URL)
+  OrderRepository({
+    FirebaseFunctions? functions,
+    FirebaseStorage? storage,
+    FirebaseFirestore? firestore,
+  })  : _functions = functions ?? FirebaseFunctions.instance,
+        _storage = storage ?? FirebaseStorage.instance,
+        _firestore = firestore ?? FirebaseFirestore.instance;
+
+  /// Upload design image to Firebase Storage
   Future<String> uploadDesign(
     List<List<Color>> pixels,
     String orderId,
   ) async {
-    // In production, this uploads to Firebase Storage
-    // For now, just generate the PNG data to verify it works
+    // Convert canvas to high-res PNG
     final Uint8List pngBytes = await ImageUtils.canvasToPng(pixels);
-    debugPrint('Generated PNG: ${pngBytes.length} bytes');
 
-    // Return a placeholder URL
-    return 'https://storage.example.com/designs/$orderId.png';
+    // Upload to Firebase Storage
+    final ref = _storage.ref().child('designs/$orderId.png');
+    final uploadTask = await ref.putData(
+      pngBytes,
+      SettableMetadata(contentType: 'image/png'),
+    );
+
+    // Return download URL
+    return await uploadTask.ref.getDownloadURL();
   }
 
-  /// Create a Stripe payment intent (stub)
+  /// Create a Stripe payment intent
   Future<Map<String, dynamic>> createPaymentIntent({
     required String designUrl,
     required ShippingAddress shippingAddress,
@@ -86,25 +128,32 @@ class OrderRepository {
     required int amountCents,
     required String currency,
   }) async {
-    // In production, this calls the Firebase function
-    // For demo, simulate a delay and return mock data
-    await Future.delayed(const Duration(seconds: 1));
+    final callable = _functions.httpsCallable('createPaymentIntent');
+    final result = await callable.call<Map<String, dynamic>>({
+      'designUrl': designUrl,
+      'shippingAddress': shippingAddress.toMap(),
+      'tshirtColorIndex': tshirtColorIndex,
+      'tshirtColor': AppColors.tshirtColorNames[tshirtColorIndex],
+      'amountCents': amountCents,
+      'currency': currency,
+    });
 
-    final orderId = 'order_${DateTime.now().millisecondsSinceEpoch}';
-
-    return {
-      'clientSecret': 'demo_client_secret',
-      'orderId': orderId,
-    };
+    return Map<String, dynamic>.from(result.data);
   }
 
-  /// Get order by ID (stub)
+  /// Get order by ID
   Future<Order?> getOrder(String orderId) async {
-    return null;
+    final doc = await _firestore.collection('orders').doc(orderId).get();
+    if (!doc.exists) return null;
+    return Order.fromFirestore(doc);
   }
 
-  /// Stream order updates (stub)
+  /// Stream order updates
   Stream<Order?> watchOrder(String orderId) {
-    return Stream.value(null);
+    return _firestore
+        .collection('orders')
+        .doc(orderId)
+        .snapshots()
+        .map((doc) => doc.exists ? Order.fromFirestore(doc) : null);
   }
 }
