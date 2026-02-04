@@ -81,20 +81,19 @@ cd functions && npm install
 firebase deploy --only functions
 ```
 
-### 2. Configure Stripe
+### 2. Configure Environment Variables
 ```bash
-# Set Stripe keys
-firebase functions:config:set stripe.secret_key="sk_live_..."
-firebase functions:config:set stripe.webhook_secret="whsec_..."
+# Add Stripe and Teemill keys to functions/.env
+cp functions/.env.example functions/.env
+# Edit functions/.env with your keys:
+#   STRIPE_SECRET_KEY=sk_live_...
+#   STRIPE_WEBHOOK_SECRET=whsec_...
+#   TEEMILL_API_KEY=your_api_key
 
 # Add publishable key to app/.env
-echo "STRIPE_PUBLISHABLE_KEY=pk_live_..." > app/.env
-```
-
-### 3. Configure Teemill
-```bash
-# Set Teemill API key
-firebase functions:config:set teemill.api_key="your_api_key"
+cp app/.env.example app/.env
+# Edit app/.env with your key:
+#   STRIPE_PUBLISHABLE_KEY=pk_live_...
 ```
 
 ### 4. Run the App
