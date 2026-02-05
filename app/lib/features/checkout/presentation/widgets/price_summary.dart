@@ -18,7 +18,7 @@ class PriceSummary extends StatelessWidget {
         children: [
           _PriceRow(
             label: 'Custom T-Shirt',
-            value: 'from ${Pricing.formatPrice(Pricing.tshirtPrice)}',
+            value: Pricing.formatPrice(Pricing.tshirtPrice),
           ),
           const SizedBox(height: 8),
           _PriceRow(

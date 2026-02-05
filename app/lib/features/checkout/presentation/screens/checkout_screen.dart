@@ -45,9 +45,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         children: [
           SingleChildScrollView(
             padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 900),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                 // Price summary
                 const PriceSummary(),
                 const SizedBox(height: 16),
@@ -68,7 +71,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'You\'ll enter your shipping address on the next page.',
+                          'Shipping address shown on next page.',
                           style: TextStyle(
                             color: Colors.blue.shade700,
                             fontSize: 14,
@@ -146,7 +149,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   ],
                 ),
                 const SizedBox(height: 40),
-              ],
+                  ],
+                ),
+              ),
             ),
           ),
           // Loading overlay
