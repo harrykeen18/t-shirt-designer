@@ -8,5 +8,4 @@ dotenv.config();
 admin.initializeApp();
 
 // Export Cloud Functions
-export { createPaymentIntent } from './stripe/createPaymentIntent';
-export { stripeWebhook } from './stripe/webhookHandler';
+export { createTeemillProduct } from './teemill/createProduct';

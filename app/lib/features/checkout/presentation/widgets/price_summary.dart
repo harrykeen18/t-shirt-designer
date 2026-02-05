@@ -18,7 +18,7 @@ class PriceSummary extends StatelessWidget {
         children: [
           _PriceRow(
             label: 'Custom T-Shirt',
-            value: Pricing.formatPrice(Pricing.tshirtPrice),
+            value: 'from ${Pricing.formatPrice(Pricing.tshirtPrice)}',
           ),
           const SizedBox(height: 8),
           _PriceRow(
@@ -26,17 +26,13 @@ class PriceSummary extends StatelessWidget {
             value: 'FREE',
             valueColor: Colors.green,
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            child: Divider(),
-          ),
-          _PriceRow(
-            label: 'Total',
-            value: Pricing.formatPrice(Pricing.tshirtPrice),
-            isBold: true,
-            labelStyle: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
+          const SizedBox(height: 12),
+          Text(
+            'Final price shown at checkout',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade600,
+              fontStyle: FontStyle.italic,
             ),
           ),
         ],
@@ -48,16 +44,12 @@ class PriceSummary extends StatelessWidget {
 class _PriceRow extends StatelessWidget {
   final String label;
   final String value;
-  final bool isBold;
   final Color? valueColor;
-  final TextStyle? labelStyle;
 
   const _PriceRow({
     required this.label,
     required this.value,
-    this.isBold = false,
     this.valueColor,
-    this.labelStyle,
   });
 
   @override
@@ -67,18 +59,17 @@ class _PriceRow extends StatelessWidget {
       children: [
         Text(
           label,
-          style: labelStyle ??
-              TextStyle(
-                fontSize: 16,
-                color: Colors.grey.shade700,
-              ),
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.grey.shade700,
+          ),
         ),
         Text(
           value,
           style: TextStyle(
-            fontSize: isBold ? 20 : 16,
-            fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
-            color: valueColor ?? (isBold ? Theme.of(context).colorScheme.primary : null),
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: valueColor,
           ),
         ),
       ],

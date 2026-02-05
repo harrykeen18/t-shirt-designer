@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/checkout_provider.dart';
-import '../widgets/address_form.dart';
 import '../widgets/price_summary.dart';
+import '../../../preview/presentation/widgets/tshirt_mockup.dart';
 
-/// Checkout screen with address form and payment
+/// Checkout screen - shows design preview and checkout button
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({super.key});
 
@@ -14,28 +14,16 @@ class CheckoutScreen extends ConsumerStatefulWidget {
 }
 
 class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
-  final _formKey = GlobalKey<FormState>();
-
   @override
   void initState() {
     super.initState();
-    // Reset checkout state when entering screen
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(checkoutProvider.notifier).reset();
     });
   }
 
   Future<void> _processCheckout() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    final success = await ref.read(checkoutProvider.notifier).processCheckout();
-
-    if (success && mounted) {
-      final orderId = ref.read(checkoutProvider).orderId;
-      context.go('/success', extra: orderId);
-    }
+    await ref.read(checkoutProvider.notifier).processCheckout();
   }
 
   @override
@@ -56,24 +44,49 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       ),
       body: Stack(
         children: [
-          // Main content
           SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Address form
-                AddressForm(
-                  formKey: _formKey,
-                  onAddressChanged: (address) {
-                    ref
-                        .read(checkoutProvider.notifier)
-                        .setShippingAddress(address);
-                  },
+                // Design preview
+                const Center(
+                  child: SizedBox(
+                    height: 280,
+                    child: TshirtMockup(),
+                  ),
                 ),
                 const SizedBox(height: 24),
                 // Price summary
                 const PriceSummary(),
+                const SizedBox(height: 16),
+                // Info box
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.blue.shade100),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        color: Colors.blue.shade700,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'You\'ll enter your shipping address on the next page.',
+                          style: TextStyle(
+                            color: Colors.blue.shade700,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: 16),
                 // Error message
                 if (checkoutState.status == CheckoutStatus.error)
@@ -98,7 +111,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     ),
                   ),
                 const SizedBox(height: 24),
-                // Pay button
+                // Checkout button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -113,7 +126,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       ),
                     ),
                     child: const Text(
-                      'Pay Now',
+                      'Continue to Checkout',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
@@ -133,7 +146,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'Secure payment powered by Stripe',
+                      'Secure checkout powered by Teemill',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey.shade600,

@@ -1,31 +1,26 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_stripe/flutter_stripe.dart';
-import '../../../../core/constants/pricing.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../canvas/presentation/providers/canvas_provider.dart';
 import '../../data/repositories/order_repository.dart';
 
 /// Checkout state
 enum CheckoutStatus {
   idle,
-  uploadingDesign,
-  creatingPayment,
-  processingPayment,
-  success,
+  creatingProduct,
+  redirecting,
   error,
 }
 
 class CheckoutState {
   final CheckoutStatus status;
   final String? errorMessage;
-  final String? orderId;
-  final ShippingAddress? shippingAddress;
+  final String? checkoutUrl;
 
   const CheckoutState({
     required this.status,
     this.errorMessage,
-    this.orderId,
-    this.shippingAddress,
+    this.checkoutUrl,
   });
 
   factory CheckoutState.initial() {
@@ -35,32 +30,25 @@ class CheckoutState {
   CheckoutState copyWith({
     CheckoutStatus? status,
     String? errorMessage,
-    String? orderId,
-    ShippingAddress? shippingAddress,
+    String? checkoutUrl,
   }) {
     return CheckoutState(
       status: status ?? this.status,
       errorMessage: errorMessage,
-      orderId: orderId ?? this.orderId,
-      shippingAddress: shippingAddress ?? this.shippingAddress,
+      checkoutUrl: checkoutUrl ?? this.checkoutUrl,
     );
   }
 
   bool get isLoading =>
-      status == CheckoutStatus.uploadingDesign ||
-      status == CheckoutStatus.creatingPayment ||
-      status == CheckoutStatus.processingPayment;
+      status == CheckoutStatus.creatingProduct ||
+      status == CheckoutStatus.redirecting;
 
   String get statusMessage {
     switch (status) {
-      case CheckoutStatus.uploadingDesign:
-        return 'Uploading your design...';
-      case CheckoutStatus.creatingPayment:
-        return 'Setting up payment...';
-      case CheckoutStatus.processingPayment:
-        return 'Processing payment...';
-      case CheckoutStatus.success:
-        return 'Order placed successfully!';
+      case CheckoutStatus.creatingProduct:
+        return 'Creating your product...';
+      case CheckoutStatus.redirecting:
+        return 'Redirecting to checkout...';
       case CheckoutStatus.error:
         return errorMessage ?? 'An error occurred';
       default:
@@ -77,88 +65,46 @@ class CheckoutNotifier extends StateNotifier<CheckoutState> {
   CheckoutNotifier(this._ref, this._orderRepository)
       : super(CheckoutState.initial());
 
-  /// Update shipping address
-  void setShippingAddress(ShippingAddress address) {
-    state = state.copyWith(shippingAddress: address);
-  }
-
-  /// Process the checkout
-  Future<bool> processCheckout() async {
-    if (state.shippingAddress == null) {
-      state = state.copyWith(
-        status: CheckoutStatus.error,
-        errorMessage: 'Please enter a shipping address',
-      );
-      return false;
-    }
-
+  /// Process the checkout - creates a Teemill product and redirects to checkout
+  Future<void> processCheckout() async {
     try {
-      // 1. Upload design
-      state = state.copyWith(status: CheckoutStatus.uploadingDesign);
+      state = state.copyWith(status: CheckoutStatus.creatingProduct);
 
       final canvasState = _ref.read(canvasProvider);
-      final orderId = DateTime.now().millisecondsSinceEpoch.toString();
 
-      final designUrl = await _orderRepository.uploadDesign(
-        canvasState.pixels,
-        orderId,
-      );
-
-      // 2. Create payment intent
-      state = state.copyWith(status: CheckoutStatus.creatingPayment);
-
-      final paymentResult = await _orderRepository.createPaymentIntent(
-        designUrl: designUrl,
-        shippingAddress: state.shippingAddress!,
+      // Create product on Teemill
+      final result = await _orderRepository.createTeemillProduct(
+        pixels: canvasState.pixels,
         tshirtColorIndex: canvasState.selectedTshirtColorIndex,
-        amountCents: Pricing.tshirtPriceCents,
-        currency: Pricing.currency.toLowerCase(),
       );
 
-      final clientSecret = paymentResult['clientSecret'] as String?;
-      final returnedOrderId = paymentResult['orderId'] as String?;
-
-      if (clientSecret == null) {
-        throw Exception('Failed to create payment intent');
+      final checkoutUrl = result['checkoutUrl'] as String?;
+      if (checkoutUrl == null) {
+        throw Exception('No checkout URL returned');
       }
 
-      // 3. Present payment sheet
-      state = state.copyWith(status: CheckoutStatus.processingPayment);
-
-      await Stripe.instance.initPaymentSheet(
-        paymentSheetParameters: SetupPaymentSheetParameters(
-          paymentIntentClientSecret: clientSecret,
-          merchantDisplayName: 'T-Shirt Print',
-          style: ThemeMode.system,
-        ),
-      );
-
-      await Stripe.instance.presentPaymentSheet();
-
-      // 4. Success!
       state = state.copyWith(
-        status: CheckoutStatus.success,
-        orderId: returnedOrderId ?? orderId,
+        status: CheckoutStatus.redirecting,
+        checkoutUrl: checkoutUrl,
       );
 
-      return true;
-    } on StripeException catch (e) {
-      // User cancelled or payment failed
-      if (e.error.code == FailureCode.Canceled) {
-        state = state.copyWith(status: CheckoutStatus.idle);
+      // Open the Teemill checkout URL
+      final uri = Uri.parse(checkoutUrl);
+      if (kIsWeb) {
+        // On web, open in same tab
+        await launchUrl(uri, mode: LaunchMode.inAppWebView);
       } else {
-        state = state.copyWith(
-          status: CheckoutStatus.error,
-          errorMessage: e.error.localizedMessage ?? 'Payment failed',
-        );
+        // On mobile, open in browser
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
       }
-      return false;
+
+      // Reset state after redirect
+      state = CheckoutState.initial();
     } catch (e) {
       state = state.copyWith(
         status: CheckoutStatus.error,
         errorMessage: e.toString(),
       );
-      return false;
     }
   }
 
