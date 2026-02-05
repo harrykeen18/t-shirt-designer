@@ -8,20 +8,45 @@ import '../widgets/color_palette.dart';
 import '../../../checkout/presentation/providers/checkout_provider.dart';
 
 /// Main canvas screen where users create their pixel art designs
-class CanvasScreen extends ConsumerWidget {
+class CanvasScreen extends ConsumerStatefulWidget {
   const CanvasScreen({super.key});
 
+  @override
+  ConsumerState<CanvasScreen> createState() => _CanvasScreenState();
+}
+
+class _CanvasScreenState extends ConsumerState<CanvasScreen> {
   static const double _wideBreakpoint = 900;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void initState() {
+    super.initState();
+    // Reset checkout state when returning to canvas (e.g., from browser back button)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(checkoutProvider.notifier).reset();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final canvasState = ref.watch(canvasProvider);
     final checkoutState = ref.watch(checkoutProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Your Design'),
-        centerTitle: true,
+        title: Row(
+          children: [
+            _PixelLogo(),
+            const SizedBox(width: 8),
+            const Text(
+              'PixelPrint',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
+            ),
+          ],
+        ),
         elevation: 0,
         actions: [
           IconButton(
@@ -192,51 +217,48 @@ class CanvasScreen extends ConsumerWidget {
   ) {
     return Column(
       children: [
-        // Background color selector
+        // Background color selector - compact single line
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-          child: Center(
-            child: Column(
-              children: [
-                Text(
-                  'Background',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade700,
-                    fontWeight: FontWeight.w500,
-                  ),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Background',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey.shade700,
+                  fontWeight: FontWeight.w500,
                 ),
-                const SizedBox(height: 8),
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: List.generate(AppColors.backgroundColors.length, (index) {
-                    final color = AppColors.backgroundColors[index];
-                    final isSelected = canvasState.selectedBackgroundColorIndex == index;
-                    return GestureDetector(
-                      onTap: () => ref
-                          .read(canvasProvider.notifier)
-                          .selectBackgroundColor(index),
-                      child: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: color,
-                          border: Border.all(
-                            color: isSelected
-                                ? Theme.of(context).colorScheme.primary
-                                : Colors.grey.shade300,
-                            width: isSelected ? 2.5 : 1,
-                          ),
-                          borderRadius: BorderRadius.circular(6),
+              ),
+              const SizedBox(width: 12),
+              ...List.generate(AppColors.backgroundColors.length, (index) {
+                final color = AppColors.backgroundColors[index];
+                final isSelected = canvasState.selectedBackgroundColorIndex == index;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: GestureDetector(
+                    onTap: () => ref
+                        .read(canvasProvider.notifier)
+                        .selectBackgroundColor(index),
+                    child: Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: color,
+                        border: Border.all(
+                          color: isSelected
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.grey.shade300,
+                          width: isSelected ? 2.5 : 1,
                         ),
+                        borderRadius: BorderRadius.circular(6),
                       ),
-                    );
-                  }),
-                ),
-              ],
-            ),
+                    ),
+                  ),
+                );
+              }),
+            ],
           ),
         ),
         // Canvas area
@@ -333,6 +355,48 @@ class CanvasScreen extends ConsumerWidget {
             child: const Text('Clear'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// 4x4 pixel grid logo
+class _PixelLogo extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    // Define the 4x4 pixel pattern (P shape)
+    final pixels = [
+      [Colors.purple[400]!, Colors.purple[400]!, Colors.purple[400]!, Colors.transparent],
+      [Colors.purple[400]!, Colors.transparent, Colors.transparent, Colors.purple[400]!],
+      [Colors.purple[400]!, Colors.purple[400]!, Colors.purple[400]!, Colors.transparent],
+      [Colors.purple[400]!, Colors.transparent, Colors.transparent, Colors.transparent],
+    ];
+
+    return Container(
+      width: 24,
+      height: 24,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Column(
+        children: List.generate(4, (row) {
+          return Expanded(
+            child: Row(
+              children: List.generate(4, (col) {
+                return Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: pixels[row][col],
+                      border: pixels[row][col] != Colors.transparent
+                          ? Border.all(color: Colors.purple[300]!, width: 0.5)
+                          : null,
+                    ),
+                  ),
+                );
+              }),
+            ),
+          );
+        }),
       ),
     );
   }
