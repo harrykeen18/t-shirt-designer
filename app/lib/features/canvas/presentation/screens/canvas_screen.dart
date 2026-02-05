@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -46,17 +47,28 @@ class CanvasScreen extends ConsumerWidget {
         ],
       ),
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isWide = constraints.maxWidth >= _wideBreakpoint;
-
-            if (isWide) {
-              return _buildWideLayout(context, ref, canvasState);
-            } else {
-              return _buildNarrowLayout(context, ref, canvasState);
-            }
-          },
-        ),
+        child: kIsWeb
+            ? LayoutBuilder(
+                builder: (context, constraints) {
+                  // Web: use pixel width breakpoint
+                  final isWide = constraints.maxWidth >= _wideBreakpoint;
+                  if (isWide) {
+                    return _buildWideLayout(context, ref, canvasState);
+                  } else {
+                    return _buildNarrowLayout(context, ref, canvasState);
+                  }
+                },
+              )
+            : OrientationBuilder(
+                builder: (context, orientation) {
+                  // Mobile: use device orientation
+                  if (orientation == Orientation.landscape) {
+                    return _buildWideLayout(context, ref, canvasState);
+                  } else {
+                    return _buildNarrowLayout(context, ref, canvasState);
+                  }
+                },
+              ),
       ),
     );
   }
