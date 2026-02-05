@@ -39,11 +39,40 @@ export const createTeemillProduct = functions.https.onCall(
       // Get the color for this design
       const color = COLOR_MAP[data.tshirtColorIndex] ?? 'White';
 
+      // Prepare the base64 image with data URI prefix
+      const imageDataUri = data.imageBase64.startsWith('data:')
+        ? data.imageBase64
+        : `data:image/png;base64,${data.imageBase64}`;
+
+      // Extract raw base64 (without data URI prefix) for Storage
+      const rawBase64 = data.imageBase64.startsWith('data:')
+        ? data.imageBase64.split(',')[1]
+        : data.imageBase64;
+
+      // Save image to Firebase Storage
+      const bucket = admin.storage().bucket();
+      const imageBuffer = Buffer.from(rawBase64, 'base64');
+      const file = bucket.file(`designs/${referenceId}.png`);
+
+      await file.save(imageBuffer, {
+        metadata: {
+          contentType: 'image/png',
+          metadata: {
+            referenceId,
+            tshirtColor: color,
+          },
+        },
+      });
+
+      // Make the file publicly readable and get the URL
+      await file.makePublic();
+      const storageUrl = `https://storage.googleapis.com/${bucket.name}/designs/${referenceId}.png`;
+
+      functions.logger.info('Saved design to Storage', { referenceId, storageUrl });
+
       // Create product on Teemill
       const result = await teemillClient.createProduct({
-        image_url: data.imageBase64.startsWith('data:')
-          ? data.imageBase64
-          : `data:image/png;base64,${data.imageBase64}`,
+        image_url: imageDataUri,
         item_code: 'RNA1',  // Men's Basic T-shirt
         colours: color,
         name: data.productName || 'Custom Pixel Art T-Shirt',
@@ -59,6 +88,7 @@ export const createTeemillProduct = functions.https.onCall(
         teemillProductId: result.id,
         tshirtColorIndex: data.tshirtColorIndex,
         tshirtColor: color,
+        imageUrl: storageUrl,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
