@@ -71,7 +71,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Shipping address shown on next page.',
+                          'You\'ll enter your shipping address on the next page.',
                           style: TextStyle(
                             color: Colors.blue.shade700,
                             fontSize: 14,

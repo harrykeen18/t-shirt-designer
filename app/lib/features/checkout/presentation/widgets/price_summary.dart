@@ -23,8 +23,7 @@ class PriceSummary extends StatelessWidget {
           const SizedBox(height: 8),
           _PriceRow(
             label: 'Shipping',
-            value: 'FREE',
-            valueColor: Colors.green,
+            value: 'shown on next page',
           ),
           const SizedBox(height: 12),
           Text(
