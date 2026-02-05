@@ -13,6 +13,7 @@ class ColorPalette extends ConsumerWidget {
 
     return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Tool toggle (Brush/Eraser)
         Row(
@@ -36,69 +37,35 @@ class ColorPalette extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 16),
-        // Color palette
+        // Color palette - grid of squares like background selector
         Wrap(
-          alignment: WrapAlignment.center,
           spacing: 8,
           runSpacing: 8,
-          children: List.generate(
-            AppColors.paletteColors.length,
-            (index) => _ColorButton(
-              color: AppColors.paletteColors[index],
-              isSelected: canvasState.selectedColor ==
-                      AppColors.paletteColors[index] &&
-                  canvasState.tool == DrawingTool.brush,
-              onTap: () => ref
-                  .read(canvasProvider.notifier)
-                  .selectColor(AppColors.paletteColors[index]),
-            ),
-          ),
+          children: List.generate(AppColors.paletteColors.length, (index) {
+            final color = AppColors.paletteColors[index];
+            final isSelected = canvasState.selectedColor == color &&
+                canvasState.tool == DrawingTool.brush;
+            return GestureDetector(
+              onTap: () =>
+                  ref.read(canvasProvider.notifier).selectColor(color),
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: color,
+                  border: Border.all(
+                    color: isSelected
+                        ? Theme.of(context).colorScheme.primary
+                        : Colors.grey.shade300,
+                    width: isSelected ? 2.5 : 1,
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            );
+          }),
         ),
       ],
-    );
-  }
-}
-
-class _ColorButton extends StatelessWidget {
-  final Color color;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _ColorButton({
-    required this.color,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isWhite = color == Colors.white || color.value == 0xFFFFFFFF;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        width: isSelected ? 44 : 40,
-        height: isSelected ? 44 : 40,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: isSelected
-                ? Theme.of(context).colorScheme.primary
-                : (isWhite ? Colors.grey.shade300 : Colors.transparent),
-            width: isSelected ? 3 : 1,
-          ),
-          boxShadow: [
-            if (isSelected)
-              BoxShadow(
-                color: color.withOpacity(0.4),
-                blurRadius: 8,
-                spreadRadius: 2,
-              ),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -120,8 +87,7 @@ class _ToolButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
+      child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
