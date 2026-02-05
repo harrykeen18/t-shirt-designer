@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../canvas/presentation/providers/canvas_provider.dart';
 import '../../data/repositories/order_repository.dart';
+import '../../../../core/utils/web_redirect.dart'
+    if (dart.library.html) '../../../../core/utils/web_redirect_web.dart';
 
 /// Checkout state
 enum CheckoutStatus {
@@ -90,17 +92,16 @@ class CheckoutNotifier extends StateNotifier<CheckoutState> {
       );
 
       // Open the Teemill checkout URL
-      final uri = Uri.parse(checkoutUrl);
       if (kIsWeb) {
-        // On web, open in same tab
-        await launchUrl(uri, mode: LaunchMode.inAppWebView);
+        // On web, redirect in same tab (avoids popup blocker)
+        redirectToUrl(checkoutUrl);
       } else {
         // On mobile, open in browser
+        final uri = Uri.parse(checkoutUrl);
         await launchUrl(uri, mode: LaunchMode.externalApplication);
+        // Reset state after redirect
+        state = CheckoutState.initial();
       }
-
-      // Reset state after redirect
-      state = CheckoutState.initial();
     } catch (e) {
       state = state.copyWith(
         status: CheckoutStatus.error,
