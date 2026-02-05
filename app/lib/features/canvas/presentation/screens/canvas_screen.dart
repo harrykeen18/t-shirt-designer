@@ -78,8 +78,10 @@ class CanvasScreen extends ConsumerWidget {
                         itemCount: AppColors.backgroundColors.length,
                         itemBuilder: (context, index) {
                           final color = AppColors.backgroundColors[index];
-                          final isSelected =
-                              canvasState.selectedBackgroundColorIndex == index;
+                          // Use 0 as default for hot reload compatibility
+                          final selectedIndex =
+                              canvasState.selectedBackgroundColorIndex;
+                          final isSelected = selectedIndex == index;
                           return GestureDetector(
                             onTap: () => ref
                                 .read(canvasProvider.notifier)

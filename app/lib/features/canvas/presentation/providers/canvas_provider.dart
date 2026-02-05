@@ -14,7 +14,8 @@ class CanvasState {
   final List<List<List<Color>>> undoHistory;
   final List<List<List<Color>>> redoHistory;
   final int selectedTshirtColorIndex;
-  final int selectedBackgroundColorIndex;
+  // Using nullable + default for hot reload compatibility
+  final int? _backgroundColorIndex;
 
   const CanvasState({
     required this.pixels,
@@ -23,8 +24,8 @@ class CanvasState {
     required this.undoHistory,
     required this.redoHistory,
     required this.selectedTshirtColorIndex,
-    required this.selectedBackgroundColorIndex,
-  });
+    int? selectedBackgroundColorIndex,
+  }) : _backgroundColorIndex = selectedBackgroundColorIndex;
 
   factory CanvasState.initial() {
     return CanvasState(
@@ -38,9 +39,17 @@ class CanvasState {
     );
   }
 
+  /// Get selected background color index (defaults to 0/white)
+  int get selectedBackgroundColorIndex => _backgroundColorIndex ?? 0;
+
   /// Get the current background color
-  Color get backgroundColor =>
-      AppColors.backgroundColors[selectedBackgroundColorIndex];
+  Color get backgroundColor {
+    final index = selectedBackgroundColorIndex;
+    if (index >= 0 && index < AppColors.backgroundColors.length) {
+      return AppColors.backgroundColors[index];
+    }
+    return AppColors.backgroundColors[0]; // Default to white
+  }
 
   CanvasState copyWith({
     List<List<Color>>? pixels,
