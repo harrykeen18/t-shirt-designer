@@ -13,7 +13,7 @@ class ColorPalette extends ConsumerWidget {
 
     return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         // Tool toggle (Brush/Eraser)
         Row(

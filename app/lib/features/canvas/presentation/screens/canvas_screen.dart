@@ -169,51 +169,44 @@ class CanvasScreen extends ConsumerWidget {
         // Background color selector
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
+          child: Column(
             children: [
               Text(
-                'Background:',
+                'Background',
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.grey.shade700,
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: SizedBox(
-                  height: 32,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: AppColors.backgroundColors.length,
-                    itemBuilder: (context, index) {
-                      final color = AppColors.backgroundColors[index];
-                      final selectedIndex =
-                          canvasState.selectedBackgroundColorIndex;
-                      final isSelected = selectedIndex == index;
-                      return GestureDetector(
-                        onTap: () => ref
-                            .read(canvasProvider.notifier)
-                            .selectBackgroundColor(index),
-                        child: Container(
-                          width: 32,
-                          height: 32,
-                          margin: const EdgeInsets.only(right: 8),
-                          decoration: BoxDecoration(
-                            color: color,
-                            border: Border.all(
-                              color: isSelected
-                                  ? Theme.of(context).colorScheme.primary
-                                  : Colors.grey.shade300,
-                              width: isSelected ? 2.5 : 1,
-                            ),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
+              const SizedBox(height: 8),
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 8,
+                runSpacing: 8,
+                children: List.generate(AppColors.backgroundColors.length, (index) {
+                  final color = AppColors.backgroundColors[index];
+                  final isSelected = canvasState.selectedBackgroundColorIndex == index;
+                  return GestureDetector(
+                    onTap: () => ref
+                        .read(canvasProvider.notifier)
+                        .selectBackgroundColor(index),
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: color,
+                        border: Border.all(
+                          color: isSelected
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.grey.shade300,
+                          width: isSelected ? 2.5 : 1,
                         ),
-                      );
-                    },
-                  ),
-                ),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+                  );
+                }),
               ),
             ],
           ),
