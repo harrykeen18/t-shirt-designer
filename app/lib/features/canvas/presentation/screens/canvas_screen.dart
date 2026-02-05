@@ -130,7 +130,7 @@ class CanvasScreen extends ConsumerWidget {
                         ),
                       ),
                       child: const Text(
-                        'Continue to Checkout',
+                        'Order T-Shirt',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
