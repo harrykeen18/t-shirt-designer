@@ -159,6 +159,53 @@ class CanvasScreen extends ConsumerWidget {
   ) {
     return Column(
       children: [
+        // Background color selector
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Center(
+            child: Column(
+              children: [
+                Text(
+                  'Background',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade700,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: List.generate(AppColors.backgroundColors.length, (index) {
+                    final color = AppColors.backgroundColors[index];
+                    final isSelected = canvasState.selectedBackgroundColorIndex == index;
+                    return GestureDetector(
+                      onTap: () => ref
+                          .read(canvasProvider.notifier)
+                          .selectBackgroundColor(index),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: color,
+                          border: Border.all(
+                            color: isSelected
+                                ? Theme.of(context).colorScheme.primary
+                                : Colors.grey.shade300,
+                            width: isSelected ? 2.5 : 1,
+                          ),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ],
+            ),
+          ),
+        ),
         // Canvas area
         Expanded(
           child: Padding(
@@ -166,54 +213,6 @@ class CanvasScreen extends ConsumerWidget {
             child: const PixelGrid(),
           ),
         ),
-        // Background color selector
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Center(
-            child: Column(
-              children: [
-              Text(
-                'Background',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade700,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 8,
-                runSpacing: 8,
-                children: List.generate(AppColors.backgroundColors.length, (index) {
-                  final color = AppColors.backgroundColors[index];
-                  final isSelected = canvasState.selectedBackgroundColorIndex == index;
-                  return GestureDetector(
-                    onTap: () => ref
-                        .read(canvasProvider.notifier)
-                        .selectBackgroundColor(index),
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: color,
-                        border: Border.all(
-                          color: isSelected
-                              ? Theme.of(context).colorScheme.primary
-                              : Colors.grey.shade300,
-                          width: isSelected ? 2.5 : 1,
-                        ),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                  );
-                }),
-              ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
         // Color palette
         Padding(
           padding: const EdgeInsets.all(16),
