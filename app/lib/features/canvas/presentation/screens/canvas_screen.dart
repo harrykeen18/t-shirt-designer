@@ -16,6 +16,7 @@ class CanvasScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final canvasState = ref.watch(canvasProvider);
+    final checkoutState = ref.watch(checkoutProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -47,28 +48,60 @@ class CanvasScreen extends ConsumerWidget {
         ],
       ),
       body: SafeArea(
-        child: kIsWeb
-            ? LayoutBuilder(
-                builder: (context, constraints) {
-                  // Web: use pixel width breakpoint
-                  final isWide = constraints.maxWidth >= _wideBreakpoint;
-                  if (isWide) {
-                    return _buildWideLayout(context, ref, canvasState);
-                  } else {
-                    return _buildNarrowLayout(context, ref, canvasState);
-                  }
-                },
-              )
-            : OrientationBuilder(
-                builder: (context, orientation) {
-                  // Mobile: use device orientation
-                  if (orientation == Orientation.landscape) {
-                    return _buildWideLayout(context, ref, canvasState);
-                  } else {
-                    return _buildNarrowLayout(context, ref, canvasState);
-                  }
-                },
+        child: Stack(
+          children: [
+            kIsWeb
+                ? LayoutBuilder(
+                    builder: (context, constraints) {
+                      // Web: use pixel width breakpoint
+                      final isWide = constraints.maxWidth >= _wideBreakpoint;
+                      if (isWide) {
+                        return _buildWideLayout(context, ref, canvasState);
+                      } else {
+                        return _buildNarrowLayout(context, ref, canvasState);
+                      }
+                    },
+                  )
+                : OrientationBuilder(
+                    builder: (context, orientation) {
+                      // Mobile: use device orientation
+                      if (orientation == Orientation.landscape) {
+                        return _buildWideLayout(context, ref, canvasState);
+                      } else {
+                        return _buildNarrowLayout(context, ref, canvasState);
+                      }
+                    },
+                  ),
+            // Loading overlay
+            if (checkoutState.isLoading)
+              Container(
+                color: Colors.black.withOpacity(0.5),
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const CircularProgressIndicator(),
+                        const SizedBox(height: 16),
+                        Text(
+                          checkoutState.statusMessage,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
+          ],
+        ),
       ),
     );
   }

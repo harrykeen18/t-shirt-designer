@@ -44,33 +44,7 @@ export const createTeemillProduct = functions.https.onCall(
         ? data.imageBase64
         : `data:image/png;base64,${data.imageBase64}`;
 
-      // Extract raw base64 (without data URI prefix) for Storage
-      const rawBase64 = data.imageBase64.startsWith('data:')
-        ? data.imageBase64.split(',')[1]
-        : data.imageBase64;
-
-      // Save image to Firebase Storage
-      const bucket = admin.storage().bucket();
-      const imageBuffer = Buffer.from(rawBase64, 'base64');
-      const file = bucket.file(`designs/${referenceId}.png`);
-
-      await file.save(imageBuffer, {
-        metadata: {
-          contentType: 'image/png',
-          metadata: {
-            referenceId,
-            tshirtColor: color,
-          },
-        },
-      });
-
-      // Make the file publicly readable and get the URL
-      await file.makePublic();
-      const storageUrl = `https://storage.googleapis.com/${bucket.name}/designs/${referenceId}.png`;
-
-      functions.logger.info('Saved design to Storage', { referenceId, storageUrl });
-
-      // Create product on Teemill
+      // Create product on Teemill first (this is what users wait for)
       const result = await teemillClient.createProduct({
         image_url: imageDataUri,
         item_code: 'RNA1',  // Men's Basic T-shirt
@@ -80,16 +54,40 @@ export const createTeemillProduct = functions.https.onCall(
         cross_sell: false,  // Don't show other products
       });
 
-      // Log the design for our records
+      // Save to Storage and Firestore in parallel (don't block the redirect)
+      const rawBase64 = data.imageBase64.startsWith('data:')
+        ? data.imageBase64.split(',')[1]
+        : data.imageBase64;
+
+      const bucket = admin.storage().bucket();
+      const imageBuffer = Buffer.from(rawBase64, 'base64');
+      const file = bucket.file(`designs/${referenceId}.png`);
+      const storageUrl = `https://storage.googleapis.com/${bucket.name}/designs/${referenceId}.png`;
+
       const db = admin.firestore();
-      await db.collection('designs').doc(referenceId).set({
-        referenceId,
-        teemillProductUrl: result.url,
-        teemillProductId: result.id,
-        tshirtColorIndex: data.tshirtColorIndex,
-        tshirtColor: color,
-        imageUrl: storageUrl,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+
+      // Do these in parallel, don't await
+      Promise.all([
+        file.save(imageBuffer, {
+          metadata: {
+            contentType: 'image/png',
+            metadata: {
+              referenceId,
+              tshirtColor: color,
+            },
+          },
+        }).then(() => file.makePublic()),
+        db.collection('designs').doc(referenceId).set({
+          referenceId,
+          teemillProductUrl: result.url,
+          teemillProductId: result.id,
+          tshirtColorIndex: data.tshirtColorIndex,
+          tshirtColor: color,
+          imageUrl: storageUrl,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        }),
+      ]).catch(error => {
+        functions.logger.error('Error saving to Storage/Firestore', error);
       });
 
       functions.logger.info('Created Teemill product', {
