@@ -1,11 +1,11 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../../core/constants/colors.dart';
 import '../providers/canvas_provider.dart';
 import '../widgets/pixel_grid.dart';
 import '../widgets/color_palette.dart';
+import '../../../checkout/presentation/providers/checkout_provider.dart';
 
 /// Main canvas screen where users create their pixel art designs
 class CanvasScreen extends ConsumerWidget {
@@ -126,7 +126,7 @@ class CanvasScreen extends ConsumerWidget {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: canvasState.hasContent
-                          ? () => context.push('/checkout')
+                          ? () => ref.read(checkoutProvider.notifier).processCheckout()
                           : null,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -225,7 +225,7 @@ class CanvasScreen extends ConsumerWidget {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: canvasState.hasContent
-                  ? () => context.push('/checkout')
+                  ? () => ref.read(checkoutProvider.notifier).processCheckout()
                   : null,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),

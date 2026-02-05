@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 
 import 'firebase_options.dart';
 import 'features/canvas/presentation/screens/canvas_screen.dart';
-import 'features/checkout/presentation/screens/checkout_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,10 +24,6 @@ final _router = GoRouter(
     GoRoute(
       path: '/',
       builder: (context, state) => const CanvasScreen(),
-    ),
-    GoRoute(
-      path: '/checkout',
-      builder: (context, state) => const CheckoutScreen(),
     ),
   ],
 );
