@@ -10,7 +10,7 @@ import '../widgets/color_palette.dart';
 class CanvasScreen extends ConsumerWidget {
   const CanvasScreen({super.key});
 
-  static const double _wideBreakpoint = 700;
+  static const double _wideBreakpoint = 900;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
