@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/checkout_provider.dart';
 import '../widgets/price_summary.dart';
-import '../../../preview/presentation/widgets/tshirt_mockup.dart';
 
 /// Checkout screen - shows design preview and checkout button
 class CheckoutScreen extends ConsumerStatefulWidget {
@@ -49,14 +48,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Design preview
-                const Center(
-                  child: SizedBox(
-                    height: 280,
-                    child: TshirtMockup(),
-                  ),
-                ),
-                const SizedBox(height: 24),
                 // Price summary
                 const PriceSummary(),
                 const SizedBox(height: 16),

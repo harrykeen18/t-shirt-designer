@@ -125,14 +125,14 @@ class CanvasScreen extends ConsumerWidget {
               ),
               child: const ColorPalette(),
             ),
-            // Preview button
+            // Checkout button
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: canvasState.hasContent
-                      ? () => context.push('/preview')
+                      ? () => context.push('/checkout')
                       : null,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -141,7 +141,7 @@ class CanvasScreen extends ConsumerWidget {
                     ),
                   ),
                   child: const Text(
-                    'Preview on T-Shirt',
+                    'Continue to Checkout',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
