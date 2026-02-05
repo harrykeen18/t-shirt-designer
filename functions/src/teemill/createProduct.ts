@@ -44,17 +44,7 @@ export const createTeemillProduct = functions.https.onCall(
         ? data.imageBase64
         : `data:image/png;base64,${data.imageBase64}`;
 
-      // Create product on Teemill first (this is what users wait for)
-      const result = await teemillClient.createProduct({
-        image_url: imageDataUri,
-        item_code: 'RNA1',  // Men's Basic T-shirt
-        colours: color,
-        name: data.productName || 'Custom Pixel Art T-Shirt',
-        description: 'A unique pixel art design, printed sustainably on organic cotton.',
-        cross_sell: false,  // Don't show other products
-      });
-
-      // Save to Storage and Firestore in parallel (don't block the redirect)
+      // Extract raw base64 (without data URI prefix) for Storage
       const rawBase64 = data.imageBase64.startsWith('data:')
         ? data.imageBase64.split(',')[1]
         : data.imageBase64;
@@ -64,10 +54,16 @@ export const createTeemillProduct = functions.https.onCall(
       const file = bucket.file(`designs/${referenceId}.png`);
       const storageUrl = `https://storage.googleapis.com/${bucket.name}/designs/${referenceId}.png`;
 
-      const db = admin.firestore();
-
-      // Do these in parallel, don't await
-      Promise.all([
+      // Do Teemill API call, Storage save, and Firestore save in parallel
+      const [result] = await Promise.all([
+        teemillClient.createProduct({
+          image_url: imageDataUri,
+          item_code: 'RNA1',  // Men's Basic T-shirt
+          colours: color,
+          name: data.productName || 'Custom Pixel Art T-Shirt',
+          description: 'A unique pixel art design, printed sustainably on organic cotton.',
+          cross_sell: false,  // Don't show other products
+        }),
         file.save(imageBuffer, {
           metadata: {
             contentType: 'image/png',
@@ -76,18 +72,25 @@ export const createTeemillProduct = functions.https.onCall(
               tshirtColor: color,
             },
           },
-        }).then(() => file.makePublic()),
-        db.collection('designs').doc(referenceId).set({
+        }).then(() => {
+          functions.logger.info('Saved design to Storage', { referenceId });
+          return file.makePublic();
+        }),
+        admin.firestore().collection('designs').doc(referenceId).set({
           referenceId,
-          teemillProductUrl: result.url,
-          teemillProductId: result.id,
+          teemillProductUrl: '', // Will be updated after Teemill call
+          teemillProductId: '',
           tshirtColorIndex: data.tshirtColorIndex,
           tshirtColor: color,
           imageUrl: storageUrl,
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
         }),
-      ]).catch(error => {
-        functions.logger.error('Error saving to Storage/Firestore', error);
+      ]);
+
+      // Update Firestore with Teemill product details
+      await admin.firestore().collection('designs').doc(referenceId).update({
+        teemillProductUrl: result.url,
+        teemillProductId: result.id,
       });
 
       functions.logger.info('Created Teemill product', {
