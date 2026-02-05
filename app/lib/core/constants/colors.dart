@@ -32,8 +32,34 @@ class AppColors {
     'Gray',
   ];
 
-  /// Default canvas background (transparent/white)
-  static const Color canvasBackground = Color(0xFFFFFFFF);
+  /// Background colors for the design (solid colors for print)
+  static const List<Color> backgroundColors = [
+    Color(0xFFFFFFFF), // White
+    Color(0xFF000000), // Black
+    Color(0xFFE53935), // Red
+    Color(0xFFFF9800), // Orange
+    Color(0xFFFFEB3B), // Yellow
+    Color(0xFF4CAF50), // Green
+    Color(0xFF2196F3), // Blue
+    Color(0xFF9C27B0), // Purple
+    Color(0xFFE91E63), // Pink
+    Color(0xFF795548), // Brown
+    Color(0xFF9E9E9E), // Gray
+  ];
+
+  static const List<String> backgroundColorNames = [
+    'White',
+    'Black',
+    'Red',
+    'Orange',
+    'Yellow',
+    'Green',
+    'Blue',
+    'Purple',
+    'Pink',
+    'Brown',
+    'Gray',
+  ];
 
   /// T-shirt mockup colors
   static const List<Color> tshirtColors = [

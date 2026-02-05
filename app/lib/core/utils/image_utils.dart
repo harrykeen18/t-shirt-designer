@@ -17,14 +17,39 @@ class ImageUtils {
   static const int outputPixelSize = outputSize ~/ gridSize; // 100px per pixel
 
   /// Convert canvas state to high-resolution PNG bytes
-  static Future<Uint8List> canvasToPng(List<List<Color>> pixels) async {
+  ///
+  /// If [backgroundColor] is provided, transparent pixels will be filled
+  /// with that color. This is required for print-on-demand services.
+  static Future<Uint8List> canvasToPng(
+    List<List<Color>> pixels, {
+    Color? backgroundColor,
+  }) async {
     // Create a high-res image using the image package
     final image = img.Image(width: outputSize, height: outputSize);
+
+    // If we have a background color, fill the entire image first
+    if (backgroundColor != null) {
+      final bgColor = img.ColorRgba8(
+        backgroundColor.red,
+        backgroundColor.green,
+        backgroundColor.blue,
+        255,
+      );
+      for (int y = 0; y < outputSize; y++) {
+        for (int x = 0; x < outputSize; x++) {
+          image.setPixel(x, y, bgColor);
+        }
+      }
+    }
 
     // Fill with each pixel color, scaled up
     for (int y = 0; y < gridSize; y++) {
       for (int x = 0; x < gridSize; x++) {
         final color = pixels[y][x];
+
+        // Skip transparent pixels if we have a background
+        if (color.alpha == 0) continue;
+
         final imgColor = img.ColorRgba8(
           color.red,
           color.green,

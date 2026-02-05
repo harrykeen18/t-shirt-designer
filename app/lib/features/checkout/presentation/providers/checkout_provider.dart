@@ -76,6 +76,7 @@ class CheckoutNotifier extends StateNotifier<CheckoutState> {
       final result = await _orderRepository.createTeemillProduct(
         pixels: canvasState.pixels,
         tshirtColorIndex: canvasState.selectedTshirtColorIndex,
+        backgroundColor: canvasState.backgroundColor,
       );
 
       final checkoutUrl = result['checkoutUrl'] as String?;

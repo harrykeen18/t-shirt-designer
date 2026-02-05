@@ -19,10 +19,14 @@ class OrderRepository {
   Future<Map<String, dynamic>> createTeemillProduct({
     required List<List<Color>> pixels,
     required int tshirtColorIndex,
+    required Color backgroundColor,
     String? productName,
   }) async {
-    // Convert canvas to PNG bytes
-    final Uint8List pngBytes = await ImageUtils.canvasToPng(pixels);
+    // Convert canvas to PNG bytes with background color
+    final Uint8List pngBytes = await ImageUtils.canvasToPng(
+      pixels,
+      backgroundColor: backgroundColor,
+    );
 
     // Base64 encode for the API
     final String base64Image = base64Encode(pngBytes);

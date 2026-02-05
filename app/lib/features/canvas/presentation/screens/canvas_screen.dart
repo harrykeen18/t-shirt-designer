@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/constants/colors.dart';
 import '../providers/canvas_provider.dart';
 import '../widgets/pixel_grid.dart';
 import '../widgets/color_palette.dart';
@@ -55,6 +56,58 @@ class CanvasScreen extends ConsumerWidget {
                 child: const PixelGrid(),
               ),
             ),
+            // Background color selector
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Text(
+                    'Background:',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade700,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SizedBox(
+                      height: 32,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: AppColors.backgroundColors.length,
+                        itemBuilder: (context, index) {
+                          final color = AppColors.backgroundColors[index];
+                          final isSelected =
+                              canvasState.selectedBackgroundColorIndex == index;
+                          return GestureDetector(
+                            onTap: () => ref
+                                .read(canvasProvider.notifier)
+                                .selectBackgroundColor(index),
+                            child: Container(
+                              width: 32,
+                              height: 32,
+                              margin: const EdgeInsets.only(right: 8),
+                              decoration: BoxDecoration(
+                                color: color,
+                                border: Border.all(
+                                  color: isSelected
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Colors.grey.shade300,
+                                  width: isSelected ? 2.5 : 1,
+                                ),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
             // Color palette
             Container(
               padding: const EdgeInsets.all(16),

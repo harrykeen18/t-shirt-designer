@@ -36,7 +36,7 @@ class _PixelGridState extends ConsumerState<PixelGrid> {
               height: size,
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.grey.shade300, width: 2),
-                color: Colors.white,
+                color: canvasState.backgroundColor,
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.1),
@@ -49,6 +49,7 @@ class _PixelGridState extends ConsumerState<PixelGrid> {
                 painter: PixelGridPainter(
                   pixels: canvasState.pixels,
                   gridSize: ImageUtils.gridSize,
+                  backgroundColor: canvasState.backgroundColor,
                 ),
                 size: Size(size, size),
               ),
@@ -110,18 +111,23 @@ class _PixelGridState extends ConsumerState<PixelGrid> {
 class PixelGridPainter extends CustomPainter {
   final List<List<Color>> pixels;
   final int gridSize;
+  final Color backgroundColor;
 
   PixelGridPainter({
     required this.pixels,
     required this.gridSize,
+    required this.backgroundColor,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     final pixelSize = size.width / gridSize;
     final paint = Paint();
+
+    // Choose grid line color based on background brightness
+    final bgBrightness = backgroundColor.computeLuminance();
     final gridPaint = Paint()
-      ..color = Colors.grey.shade200
+      ..color = bgBrightness > 0.5 ? Colors.grey.shade300 : Colors.grey.shade600
       ..strokeWidth = 0.5
       ..style = PaintingStyle.stroke;
 
@@ -163,6 +169,7 @@ class PixelGridPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(PixelGridPainter oldDelegate) {
-    return oldDelegate.pixels != pixels;
+    return oldDelegate.pixels != pixels ||
+        oldDelegate.backgroundColor != backgroundColor;
   }
 }

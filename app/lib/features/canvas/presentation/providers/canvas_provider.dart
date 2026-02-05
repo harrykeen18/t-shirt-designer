@@ -14,6 +14,7 @@ class CanvasState {
   final List<List<List<Color>>> undoHistory;
   final List<List<List<Color>>> redoHistory;
   final int selectedTshirtColorIndex;
+  final int selectedBackgroundColorIndex;
 
   const CanvasState({
     required this.pixels,
@@ -22,6 +23,7 @@ class CanvasState {
     required this.undoHistory,
     required this.redoHistory,
     required this.selectedTshirtColorIndex,
+    required this.selectedBackgroundColorIndex,
   });
 
   factory CanvasState.initial() {
@@ -32,8 +34,13 @@ class CanvasState {
       undoHistory: const [],
       redoHistory: const [],
       selectedTshirtColorIndex: 0, // White t-shirt
+      selectedBackgroundColorIndex: 0, // White background
     );
   }
+
+  /// Get the current background color
+  Color get backgroundColor =>
+      AppColors.backgroundColors[selectedBackgroundColorIndex];
 
   CanvasState copyWith({
     List<List<Color>>? pixels,
@@ -42,6 +49,7 @@ class CanvasState {
     List<List<List<Color>>>? undoHistory,
     List<List<List<Color>>>? redoHistory,
     int? selectedTshirtColorIndex,
+    int? selectedBackgroundColorIndex,
   }) {
     return CanvasState(
       pixels: pixels ?? this.pixels,
@@ -51,6 +59,8 @@ class CanvasState {
       redoHistory: redoHistory ?? this.redoHistory,
       selectedTshirtColorIndex:
           selectedTshirtColorIndex ?? this.selectedTshirtColorIndex,
+      selectedBackgroundColorIndex:
+          selectedBackgroundColorIndex ?? this.selectedBackgroundColorIndex,
     );
   }
 
@@ -163,6 +173,11 @@ class CanvasNotifier extends StateNotifier<CanvasState> {
   /// Select t-shirt color
   void selectTshirtColor(int index) {
     state = state.copyWith(selectedTshirtColorIndex: index);
+  }
+
+  /// Select background color for the design
+  void selectBackgroundColor(int index) {
+    state = state.copyWith(selectedBackgroundColorIndex: index);
   }
 
   /// Undo last action
