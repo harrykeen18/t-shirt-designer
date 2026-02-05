@@ -80,16 +80,9 @@ class CanvasScreen extends ConsumerWidget {
         // Controls panel on the right
         SizedBox(
           width: 280,
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.grey.shade50,
-              border: Border(
-                left: BorderSide(color: Colors.grey.shade200),
-              ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Background color selector
@@ -141,7 +134,6 @@ class CanvasScreen extends ConsumerWidget {
                 ],
               ),
             ),
-          ),
         ),
       ],
     );
@@ -216,18 +208,8 @@ class CanvasScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 8),
         // Color palette
-        Container(
+        Padding(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, -2),
-              ),
-            ],
-          ),
           child: const ColorPalette(),
         ),
         // Checkout button
