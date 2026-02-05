@@ -9,19 +9,19 @@ A Flutter mobile app that lets users create 20x20 pixel art designs and order cu
 - **Brush & Eraser Tools** - Easy design control
 - **Undo/Redo** - Unlimited history (up to 50 states)
 - **T-Shirt Preview** - Real-time mockup with 5 shirt color options
-- **Secure Checkout** - Stripe payment processing
-- **Print-on-Demand** - Teemill fulfillment integration
+- **Teemill Checkout** - Hosted checkout handles payment, shipping & fulfillment
+- **Web Support** - Works on iOS, Android, and web
 
-## Business Model
+## How It Works
 
 ```
-Customer pays YOU ($35)
+User creates design
   ↓
-Stripe processes payment
+Firebase Function creates product on Teemill
   ↓
-Firebase Function places order with Teemill (~$20)
+User redirected to Teemill checkout
   ↓
-You keep ~$15 margin (before Stripe fees)
+Teemill handles payment, printing & shipping
 ```
 
 ## Architecture
@@ -37,34 +37,30 @@ You keep ~$15 margin (before Stripe fees)
 - **Firestore**: Order records and metadata
 
 ### External Services
-- **Stripe**: Payment processing (exempt from Apple's 30% per guideline 3.1.3(e))
-- **Teemill**: Print-on-demand fulfillment
+- **Teemill**: Print-on-demand with hosted checkout (handles payment, shipping, fulfillment)
 
 ## Project Structure
 
 ```
-├── app/                          # Flutter mobile app
+├── app/                          # Flutter app (iOS, Android, Web)
 │   ├── lib/
 │   │   ├── core/                 # Constants & utilities
 │   │   └── features/
 │   │       ├── canvas/           # Pixel art drawing
 │   │       ├── preview/          # T-shirt mockup
-│   │       └── checkout/         # Payment & ordering
+│   │       └── checkout/         # Teemill integration
 │   └── assets/
 ├── functions/                    # Firebase Cloud Functions
 │   └── src/
-│       ├── stripe/               # Payment processing
-│       └── teemill/              # Order fulfillment
+│       └── teemill/              # Product creation API
 └── app_store_listing.md          # Submission materials
 ```
 
 ## Setup
 
 ### Prerequisites
-- Flutter SDK 3.38.7+
+- Flutter SDK 3.2.0+
 - Firebase CLI
-- Apple Developer Program membership ($99/year)
-- Stripe account
 - Teemill API access
 
 ### 1. Firebase Setup
@@ -83,17 +79,10 @@ firebase deploy --only functions
 
 ### 2. Configure Environment Variables
 ```bash
-# Add Stripe and Teemill keys to functions/.env
+# Add Teemill key to functions/.env
 cp functions/.env.example functions/.env
-# Edit functions/.env with your keys:
-#   STRIPE_SECRET_KEY=sk_live_...
-#   STRIPE_WEBHOOK_SECRET=whsec_...
+# Edit functions/.env with your key:
 #   TEEMILL_API_KEY=your_api_key
-
-# Add publishable key to app/.env
-cp app/.env.example app/.env
-# Edit app/.env with your key:
-#   STRIPE_PUBLISHABLE_KEY=pk_live_...
 ```
 
 ### 4. Run the App
@@ -136,14 +125,47 @@ flutter build appbundle --release
 ### Unique Advantage
 No existing app offers **simple pixel grid drawing + instant print fulfillment** in one package.
 
-## Cost Breakdown
+## Pricing
 
-| Item | Cost | Notes |
-|------|------|-------|
-| Customer Price | $35.00 | What you charge |
-| Teemill Cost | ~$20.00 | Varies by product |
-| Stripe Fee | ~$1.32 | 2.9% + $0.30 |
-| **Net Profit** | **~$13.68** | Per shirt |
+Set your retail price via the `price` parameter in `functions/src/teemill/createProduct.ts`. Teemill's base cost is approximately £12-15 for a basic organic t-shirt. Your profit is the difference between the retail price you set and Teemill's base cost.
+
+## Archived Branches
+
+### `archive/stripe-checkout`
+
+A previous implementation that used Stripe for payment processing instead of Teemill's hosted checkout. This gave more control over the checkout flow but required:
+- Collecting shipping addresses in-app
+- Managing Stripe webhooks
+- Calling Teemill's Orders API for fulfillment
+
+**What it contains:**
+- `functions/src/stripe/createPaymentIntent.ts` - Creates Stripe PaymentIntent
+- `functions/src/stripe/webhookHandler.ts` - Handles payment confirmation
+- `app/lib/features/checkout/presentation/widgets/address_form.dart` - Shipping address collection
+- `app/lib/features/checkout/presentation/screens/success_screen.dart` - Order confirmation screen
+- Full `flutter_stripe` integration
+
+**To restore Stripe checkout:**
+```bash
+# Restore the Stripe functions
+git checkout archive/stripe-checkout -- functions/src/stripe/
+
+# Restore the Flutter checkout UI
+git checkout archive/stripe-checkout -- app/lib/features/checkout/
+
+# Restore main.dart with Stripe initialization
+git checkout archive/stripe-checkout -- app/lib/main.dart
+
+# Re-add dependencies
+# In app/pubspec.yaml, add:
+#   flutter_stripe: ^11.4.0
+#   flutter_dotenv: ^5.1.0
+#   cloud_firestore: ^5.6.7
+
+# In functions, you'll need Stripe keys in .env:
+#   STRIPE_SECRET_KEY=sk_...
+#   STRIPE_WEBHOOK_SECRET=whsec_...
+```
 
 ## License
 
@@ -151,13 +173,12 @@ MIT License - See LICENSE file for details
 
 ## Built With
 
-- [Flutter](https://flutter.dev) - UI framework
+- [Flutter](https://flutter.dev) - UI framework (iOS, Android, Web)
 - [Firebase](https://firebase.google.com) - Backend services
-- [Stripe](https://stripe.com) - Payment processing
-- [Teemill](https://teemill.com) - Print-on-demand fulfillment
+- [Teemill](https://teemill.com) - Print-on-demand with hosted checkout
 
 ---
 
-**Status**: Ready for App Store submission ✅
+**Status**: Ready for deployment
 
 Created with [Claude Code](https://claude.com/claude-code)
