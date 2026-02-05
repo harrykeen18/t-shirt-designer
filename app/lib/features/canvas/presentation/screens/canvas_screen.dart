@@ -217,7 +217,7 @@ class CanvasScreen extends ConsumerWidget {
         // Color palette
         Padding(
           padding: const EdgeInsets.all(16),
-          child: const Center(child: ColorPalette()),
+          child: const Center(child: ColorPalette(centered: true)),
         ),
         // Checkout button
         Padding(

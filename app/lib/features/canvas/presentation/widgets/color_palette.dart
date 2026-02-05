@@ -5,7 +5,9 @@ import '../providers/canvas_provider.dart';
 
 /// Color palette widget for selecting drawing colors
 class ColorPalette extends ConsumerWidget {
-  const ColorPalette({super.key});
+  final bool centered;
+
+  const ColorPalette({super.key, this.centered = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -13,7 +15,8 @@ class ColorPalette extends ConsumerWidget {
 
     return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment:
+          centered ? CrossAxisAlignment.center : CrossAxisAlignment.start,
       children: [
         // Tool toggle (Brush/Eraser)
         Row(
