@@ -169,8 +169,9 @@ class CanvasScreen extends ConsumerWidget {
         // Background color selector
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            children: [
+          child: Center(
+            child: Column(
+              children: [
               Text(
                 'Background',
                 style: TextStyle(
@@ -208,14 +209,15 @@ class CanvasScreen extends ConsumerWidget {
                   );
                 }),
               ),
-            ],
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 8),
         // Color palette
         Padding(
           padding: const EdgeInsets.all(16),
-          child: const ColorPalette(),
+          child: const Center(child: ColorPalette()),
         ),
         // Checkout button
         Padding(
