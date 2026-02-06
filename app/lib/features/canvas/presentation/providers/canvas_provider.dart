@@ -35,7 +35,7 @@ class CanvasState {
       undoHistory: const [],
       redoHistory: const [],
       selectedTshirtColorIndex: 0, // White t-shirt
-      selectedBackgroundColorIndex: 0, // White background
+      selectedBackgroundColorIndex: 2, // White background
     );
   }
 

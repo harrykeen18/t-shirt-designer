@@ -32,33 +32,21 @@ class AppColors {
     'Gray',
   ];
 
-  /// Background colors for the design (solid colors for print)
+  /// Background colors for the design (light pastel colors)
   static const List<Color> backgroundColors = [
+    Color(0xFFFFB3BA), // Pastel Pink
+    Color(0xFFBAE1FF), // Pastel Blue
     Color(0xFFFFFFFF), // White
-    Color(0xFF000000), // Black
-    Color(0xFFE53935), // Red
-    Color(0xFFFF9800), // Orange
-    Color(0xFFFFEB3B), // Yellow
-    Color(0xFF4CAF50), // Green
-    Color(0xFF2196F3), // Blue
-    Color(0xFF9C27B0), // Purple
-    Color(0xFFE91E63), // Pink
-    Color(0xFF795548), // Brown
-    Color(0xFF9E9E9E), // Gray
+    Color(0xFFB8F3D8), // Pastel Mint
+    Color(0xFFFFDFBA), // Pastel Peach
   ];
 
   static const List<String> backgroundColorNames = [
-    'White',
-    'Black',
-    'Red',
-    'Orange',
-    'Yellow',
-    'Green',
-    'Blue',
-    'Purple',
     'Pink',
-    'Brown',
-    'Gray',
+    'Blue',
+    'White',
+    'Mint',
+    'Peach',
   ];
 
   /// T-shirt mockup colors
