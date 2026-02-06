@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../canvas/presentation/providers/canvas_provider.dart';
+import '../../../../core/services/providers.dart';
 import '../../data/repositories/order_repository.dart';
 import '../../../../core/utils/web_redirect.dart'
     if (dart.library.html) '../../../../core/utils/web_redirect_web.dart';
@@ -72,6 +73,9 @@ class CheckoutNotifier extends StateNotifier<CheckoutState> {
     try {
       state = state.copyWith(status: CheckoutStatus.creatingProduct);
 
+      // Track checkout start
+      await _ref.read(analyticsServiceProvider).logCheckoutStarted();
+
       final canvasState = _ref.read(canvasProvider);
 
       // Create product on Teemill
@@ -86,10 +90,16 @@ class CheckoutNotifier extends StateNotifier<CheckoutState> {
         throw Exception('No checkout URL returned');
       }
 
+      // Track successful product creation
+      await _ref.read(analyticsServiceProvider).logProductCreationSuccess(checkoutUrl);
+
       state = state.copyWith(
         status: CheckoutStatus.redirecting,
         checkoutUrl: checkoutUrl,
       );
+
+      // Track redirect
+      await _ref.read(analyticsServiceProvider).logRedirectToCheckout(checkoutUrl);
 
       // Open the Teemill checkout URL
       if (kIsWeb) {
@@ -105,6 +115,9 @@ class CheckoutNotifier extends StateNotifier<CheckoutState> {
         state = CheckoutState.initial();
       }
     } catch (e) {
+      // Track error
+      await _ref.read(analyticsServiceProvider).logCheckoutError(e.toString());
+
       state = state.copyWith(
         status: CheckoutStatus.error,
         errorMessage: e.toString(),

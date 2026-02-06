@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'firebase_options.dart';
 import 'features/canvas/presentation/screens/canvas_screen.dart';
+import 'features/privacy/presentation/screens/privacy_policy_screen.dart';
+import 'core/services/providers.dart';
+import 'core/widgets/consent_banner.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,7 +18,17 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  runApp(const ProviderScope(child: TshirtPrintApp()));
+  // Initialize SharedPreferences
+  final prefs = await SharedPreferences.getInstance();
+
+  runApp(
+    ProviderScope(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+      ],
+      child: const TshirtPrintApp(),
+    ),
+  );
 }
 
 /// Router configuration
@@ -25,14 +39,18 @@ final _router = GoRouter(
       path: '/',
       builder: (context, state) => const CanvasScreen(),
     ),
+    GoRoute(
+      path: '/privacy-policy',
+      builder: (context, state) => const PrivacyPolicyScreen(),
+    ),
   ],
 );
 
-class TshirtPrintApp extends StatelessWidget {
+class TshirtPrintApp extends ConsumerWidget {
   const TshirtPrintApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp.router(
       title: 'T-Shirt Print',
       debugShowCheckedModeBanner: false,
@@ -56,6 +74,14 @@ class TshirtPrintApp extends StatelessWidget {
         ),
       ),
       routerConfig: _router,
+      builder: (context, child) {
+        return Stack(
+          children: [
+            child!,
+            const ConsentBanner(),
+          ],
+        );
+      },
     );
   }
 }
