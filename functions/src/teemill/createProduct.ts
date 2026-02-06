@@ -1,6 +1,7 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { teemillClient } from './client';
+import { PRICING } from '../config/pricing';
 
 // Map app color indices to Teemill color names
 const COLOR_MAP: Record<number, string> = {
@@ -62,6 +63,7 @@ export const createTeemillProduct = functions.https.onCall(
           colours: color,
           name: data.productName || 'Custom Pixel Art T-Shirt',
           description: 'A unique pixel art design, printed sustainably on organic cotton.',
+          price: PRICING.tshirt.yourPrice.toFixed(2),
           cross_sell: false,  // Don't show other products
         }),
         file.save(imageBuffer, {

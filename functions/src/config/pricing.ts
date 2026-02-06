@@ -12,7 +12,7 @@ export const PRICING = {
     teemillCost: 15.00,
 
     // What customer pays you
-    yourPrice: 35.00,
+    yourPrice: 27.00,
 
     // Your profit margin
     get margin(): number {

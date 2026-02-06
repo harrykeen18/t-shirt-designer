@@ -5,7 +5,7 @@ class Pricing {
   Pricing._();
 
   /// Display price (approximate - actual price shown at Teemill checkout)
-  static const double tshirtPrice = 25.00;
+  static const double tshirtPrice = 27.00;
 
   /// Currency
   static const String currency = 'GBP';
