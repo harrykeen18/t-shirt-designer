@@ -93,7 +93,9 @@ class CheckoutNotifier extends StateNotifier<CheckoutState> {
 
       // Open the Teemill checkout URL
       if (kIsWeb) {
-        // On web, redirect in same tab (avoids popup blocker)
+        // On web, reset state before redirect so back button returns to clean state
+        state = CheckoutState.initial();
+        // Redirect in same tab (avoids popup blocker)
         redirectToUrl(checkoutUrl);
       } else {
         // On mobile, open in browser
