@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'dart:ui' as ui;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
 
@@ -24,6 +25,15 @@ class ImageUtils {
     List<List<Color>> pixels, {
     Color? backgroundColor,
   }) async {
+    // Run the heavy image processing in a separate isolate
+    return compute(_canvasToPngIsolate, _CanvasToPngParams(pixels, backgroundColor));
+  }
+
+  /// Isolate function for converting canvas to PNG
+  static Uint8List _canvasToPngIsolate(_CanvasToPngParams params) {
+    final pixels = params.pixels;
+    final backgroundColor = params.backgroundColor;
+
     // Create a high-res image using the image package
     final image = img.Image(width: outputSize, height: outputSize);
 
@@ -109,4 +119,12 @@ class ImageUtils {
       (_) => List.generate(gridSize, (_) => Colors.transparent),
     );
   }
+}
+
+/// Parameters for isolate-based PNG conversion
+class _CanvasToPngParams {
+  final List<List<Color>> pixels;
+  final Color? backgroundColor;
+
+  _CanvasToPngParams(this.pixels, this.backgroundColor);
 }
