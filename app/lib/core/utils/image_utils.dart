@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 import 'dart:ui' as ui;
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show compute, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
 
@@ -25,8 +25,72 @@ class ImageUtils {
     List<List<Color>> pixels, {
     Color? backgroundColor,
   }) async {
-    // Run the heavy image processing in a separate isolate
-    return compute(_canvasToPngIsolate, _CanvasToPngParams(pixels, backgroundColor));
+    if (kIsWeb) {
+      // On web, use chunked processing to avoid blocking the UI
+      return _canvasToPngChunked(pixels, backgroundColor);
+    } else {
+      // On native, use isolate for true background processing
+      return compute(_canvasToPngIsolate, _CanvasToPngParams(pixels, backgroundColor));
+    }
+  }
+
+  /// Chunked PNG generation for web - yields to UI between chunks
+  static Future<Uint8List> _canvasToPngChunked(
+    List<List<Color>> pixels,
+    Color? backgroundColor,
+  ) async {
+    final image = img.Image(width: outputSize, height: outputSize);
+
+    // Fill background in chunks
+    if (backgroundColor != null) {
+      final bgColor = img.ColorRgba8(
+        backgroundColor.red,
+        backgroundColor.green,
+        backgroundColor.blue,
+        255,
+      );
+
+      const int rowsPerChunk = 200;
+      for (int startY = 0; startY < outputSize; startY += rowsPerChunk) {
+        final endY = (startY + rowsPerChunk).clamp(0, outputSize);
+        for (int y = startY; y < endY; y++) {
+          for (int x = 0; x < outputSize; x++) {
+            image.setPixel(x, y, bgColor);
+          }
+        }
+        // Yield to allow UI updates
+        await Future.delayed(Duration.zero);
+      }
+    }
+
+    // Fill pixels in chunks (by grid row)
+    for (int gridY = 0; gridY < gridSize; gridY++) {
+      for (int gridX = 0; gridX < gridSize; gridX++) {
+        final color = pixels[gridY][gridX];
+        if (color.alpha == 0) continue;
+
+        final imgColor = img.ColorRgba8(
+          color.red,
+          color.green,
+          color.blue,
+          color.alpha,
+        );
+
+        // Fill the scaled pixel area
+        for (int py = 0; py < outputPixelSize; py++) {
+          for (int px = 0; px < outputPixelSize; px++) {
+            final outX = gridX * outputPixelSize + px;
+            final outY = gridY * outputPixelSize + py;
+            image.setPixel(outX, outY, imgColor);
+          }
+        }
+      }
+      // Yield after each grid row
+      await Future.delayed(Duration.zero);
+    }
+
+    // Encode as PNG (this is still blocking but relatively fast)
+    return Uint8List.fromList(img.encodePng(image));
   }
 
   /// Isolate function for converting canvas to PNG
