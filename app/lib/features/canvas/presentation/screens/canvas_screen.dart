@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/colors.dart';
 import '../../../../core/services/providers.dart';
-import '../../../../core/widgets/footer.dart';
 import '../providers/canvas_provider.dart';
 import '../widgets/pixel_grid.dart';
 import '../widgets/color_palette.dart';
@@ -60,6 +60,24 @@ class _CanvasScreenState extends ConsumerState<CanvasScreen> {
           ],
         ),
         elevation: 0,
+        actions: kIsWeb
+            ? [
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.menu),
+                  onSelected: (value) {
+                    if (value == 'privacy') {
+                      context.push('/privacy-policy');
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'privacy',
+                      child: Text('Privacy Policy'),
+                    ),
+                  ],
+                ),
+              ]
+            : null,
       ),
       body: Column(
         children: [
@@ -89,8 +107,6 @@ class _CanvasScreenState extends ConsumerState<CanvasScreen> {
                     ),
             ),
           ),
-          // Footer (web only)
-          if (kIsWeb) const AppFooter(),
         ],
       ),
     );
@@ -240,149 +256,156 @@ class _CanvasScreenState extends ConsumerState<CanvasScreen> {
     CanvasState canvasState,
     CheckoutState checkoutState,
   ) {
-    return Column(
-      children: [
-        // Toolbar row with background selector and undo/redo/delete
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Background',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey.shade700,
-                  fontWeight: FontWeight.w500,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isThin = constraints.maxWidth <= 400;
+
+        return Column(
+          children: [
+            // Toolbar row with background selector and undo/redo/delete
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (!isThin)
+                    Text(
+                      'Background',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade700,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  if (!isThin) const SizedBox(width: 12),
+                  ...List.generate(AppColors.backgroundColors.length, (index) {
+                    final color = AppColors.backgroundColors[index];
+                    final isSelected = canvasState.selectedBackgroundColorIndex == index;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: GestureDetector(
+                        onTap: () => ref
+                            .read(canvasProvider.notifier)
+                            .selectBackgroundColor(index),
+                        child: Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: color,
+                            border: Border.all(
+                              color: isSelected
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Colors.grey.shade300,
+                              width: isSelected ? 2.5 : 1,
+                            ),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                  const Spacer(),
+                  // Undo/Redo/Delete buttons
+                  IconButton(
+                    icon: const Icon(Icons.undo, size: 20),
+                    onPressed: canvasState.canUndo
+                        ? () => ref.read(canvasProvider.notifier).undo()
+                        : null,
+                    tooltip: 'Undo',
+                    constraints: const BoxConstraints(),
+                    padding: const EdgeInsets.all(8),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.redo, size: 20),
+                    onPressed: canvasState.canRedo
+                        ? () => ref.read(canvasProvider.notifier).redo()
+                        : null,
+                    tooltip: 'Redo',
+                    constraints: const BoxConstraints(),
+                    padding: const EdgeInsets.all(8),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, size: 20),
+                    onPressed: canvasState.hasContent
+                        ? () => _showClearConfirmation(context, ref)
+                        : null,
+                    tooltip: 'Clear canvas',
+                    constraints: const BoxConstraints(),
+                    padding: const EdgeInsets.all(8),
+                  ),
+                ],
+              ),
+            ),
+            // Canvas area with loading overlay
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.all(isThin ? 8 : 16),
+                child: Stack(
+                  children: [
+                    const PixelGrid(),
+                    // Loading overlay - only covers canvas
+                    if (checkoutState.isLoading)
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Center(
+                            child: Container(
+                              padding: const EdgeInsets.all(24),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const CircularProgressIndicator(),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    checkoutState.statusMessage,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 12),
-              ...List.generate(AppColors.backgroundColors.length, (index) {
-                final color = AppColors.backgroundColors[index];
-                final isSelected = canvasState.selectedBackgroundColorIndex == index;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: GestureDetector(
-                    onTap: () => ref
-                        .read(canvasProvider.notifier)
-                        .selectBackgroundColor(index),
-                    child: Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: color,
-                        border: Border.all(
-                          color: isSelected
-                              ? Theme.of(context).colorScheme.primary
-                              : Colors.grey.shade300,
-                          width: isSelected ? 2.5 : 1,
-                        ),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                  ),
-                );
-              }),
-              const Spacer(),
-              // Undo/Redo/Delete buttons
-              IconButton(
-                icon: const Icon(Icons.undo, size: 20),
-                onPressed: canvasState.canUndo
-                    ? () => ref.read(canvasProvider.notifier).undo()
-                    : null,
-                tooltip: 'Undo',
-                constraints: const BoxConstraints(),
-                padding: const EdgeInsets.all(8),
-              ),
-              IconButton(
-                icon: const Icon(Icons.redo, size: 20),
-                onPressed: canvasState.canRedo
-                    ? () => ref.read(canvasProvider.notifier).redo()
-                    : null,
-                tooltip: 'Redo',
-                constraints: const BoxConstraints(),
-                padding: const EdgeInsets.all(8),
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete_outline, size: 20),
-                onPressed: canvasState.hasContent
-                    ? () => _showClearConfirmation(context, ref)
-                    : null,
-                tooltip: 'Clear canvas',
-                constraints: const BoxConstraints(),
-                padding: const EdgeInsets.all(8),
-              ),
-            ],
-          ),
-        ),
-        // Canvas area with loading overlay
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Stack(
-              children: [
-                const PixelGrid(),
-                // Loading overlay - only covers canvas
-                if (checkoutState.isLoading)
-                  Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const CircularProgressIndicator(),
-                              const SizedBox(height: 16),
-                              Text(
-                                checkoutState.statusMessage,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
             ),
-          ),
-        ),
-        // Color palette
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: const Center(child: ColorPalette(centered: true)),
-        ),
-        // Checkout button
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-          child: OrderButton(
-            enabled: canvasState.hasContent,
-            forceReset: !checkoutState.isLoading,
-            onPressed: () {
-              // Track button click
-              ref.read(analyticsServiceProvider).logOrderButtonClicked();
-              if (kIsWeb) {
-                ref.read(webPixelManagerProvider).trackInitiateCheckout();
-              }
+            // Color palette
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: isThin ? 8 : 16, vertical: isThin ? 8 : 16),
+              child: Center(child: ColorPalette(centered: true, compact: isThin)),
+            ),
+            // Checkout button
+            Padding(
+              padding: EdgeInsets.fromLTRB(isThin ? 8 : 16, 8, isThin ? 8 : 16, 16),
+              child: OrderButton(
+                enabled: canvasState.hasContent,
+                forceReset: !checkoutState.isLoading,
+                onPressed: () {
+                  // Track button click
+                  ref.read(analyticsServiceProvider).logOrderButtonClicked();
+                  if (kIsWeb) {
+                    ref.read(webPixelManagerProvider).trackInitiateCheckout();
+                  }
 
-              // Start checkout
-              ref.read(checkoutProvider.notifier).processCheckout();
-            },
-          ),
-        ),
-      ],
+                  // Start checkout
+                  ref.read(checkoutProvider.notifier).processCheckout();
+                },
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
